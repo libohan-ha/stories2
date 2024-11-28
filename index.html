@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story！</title>
+    <style>
+        /* 页面整体设置 */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #2c2c2c;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 设置简约风格的容器 */
+        .container {
+            background-color: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 40px;
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            color: #fff;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            margin: 20px;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+        }
+
+        h1, h2 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+            margin-bottom: 20px;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .sound-button {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+        }
+
+        #story, #definitions {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .word-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 历史记录面板样式 */
+        #historyPanel {
+            display: none; /* 默认隐藏 */
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            transition: all 0.3s ease-in-out;
+        }
+
+        #historyPanel.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 历史记录按钮激活状态 */
+        #history.active {
+            background-color: #0575E6;
+        }
+
+        /* 美化滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .container {
+                width: 90%;
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        /* 进度条容器 */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 3px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #00f260, #0575E6);
+            border-radius: 20px;
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 进度条动画效果 */
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* 进度文本 */
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card">
+            <h1>Story！</h1>
+            
+            <div class="input-section glass-card">
+                <p>请输入：</p>
+                <textarea id="wordInput" placeholder="输入..."></textarea>
+                <button onclick="generateStory()" class="glow-effect">生成</button>
+            </div>
+
+            <div class="loading" id="loading">
+                生成中...
+            </div>
+
+            <div class="error" id="error">
+            </div>
+
+            <div class="output-section glass-card">
+                <h2>故事：</h2>
+                <div id="story"></div>
+
+                <h2>释义：</h2>
+                <div id="definitions"></div>
+            </div>
+
+            <div class="history-section glass-card">
+                <div class="history-header">
+                    <h2>记录</h2>
+                    <div>
+                        <button class="toggle-history" onclick="toggleHistory()">
+                            <span id="toggle-icon">▼</span>
+                            <span id="toggle-text">展开</span>
+                        </button>
+                        <button class="clear-history" onclick="clearHistory()">清空</button>
+                    </div>
+                </div>
+                <div id="historyContent" class="history-content">
+                    <div id="historyList"></div>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function playSound(word) {
+            const audio = new Audio(`http://dict.youdao.com/dictvoice?type=0&audio=${encodeURIComponent(word)}`);
+            audio.play().catch(err => console.error('播放失败：', err));
+        }
+
+        // 历史记录相关函数
+        function saveToHistory(words, story, definitions) {
+            const history = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+            const newRecord = {
+                id: Date.now(),
+                words,
+                story,
+                definitions,
+                date: new Date().toLocaleString()
+            };
+            history.unshift(newRecord); // 添加到开头
+            if (history.length > 50) { // 最多保存50条记录
+                history.pop();
+            }
+            localStorage.setItem('storyHistory', JSON.stringify(history));
+            displayHistory();
+        }
+
+        function displayHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+            
+            // 按日期分组
+            const groups = history.reduce((acc, record) => {
+                const date = record.date.split(' ')[0]; // 提取日期部分
+                if (!acc[date]) {
+                    acc[date] = [];
+                }
+                acc[date].push(record);
+                return acc;
+            }, {});
+
+            historyList.innerHTML = Object.entries(groups).map(([date, records]) => `
+                <div class="history-group">
+                    <div class="history-group-header" onclick="toggleGroup(this)">
+                        <span>${date}</span>
+                        <span class="arrow-icon">▼</span>
+                    </div>
+                    <div class="history-group-content">
+                        ${records.map(record => `
+                            <div class="history-item" onclick="showHistoryItem(${record.id})">
+                                <span>单词：${record.words}</span>
+                                <span class="history-time">${record.date.split(' ')[1]}</span>
+                                <button class="delete-btn" onclick="deleteHistoryItem(event, ${record.id})">删除</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleHistory() {
+            const content = document.getElementById('historyContent');
+            const icon = document.getElementById('toggle-icon');
+            const text = document.getElementById('toggle-text');
+            
+            content.classList.toggle('expanded');
+            if (content.classList.contains('expanded')) {
+                icon.textContent = '▲';
+                text.textContent = '收起历史';
+            } else {
+                icon.textContent = '▼';
+                text.textContent = '展开历史';
+            }
+        }
+
+        function toggleGroup(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('.arrow-icon');
+            
+            content.classList.toggle('expanded');
+            arrow.classList.toggle('expanded');
+        }
+
+        function showHistoryItem(id) {
+            const history = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+            const record = history.find(item => item.id === id);
+            if (record) {
+                document.getElementById('story').innerHTML = record.story.replace(/\n/g, '<br>');
+                document.getElementById('definitions').innerHTML = record.definitions;
+                document.getElementById('wordInput').value = record.words;
+            }
+        }
+
+        function deleteHistoryItem(event, id) {
+            event.stopPropagation(); // 阻止点击事件冒泡
+            if (confirm('确定要删除这条记录吗？')) {
+                const history = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+                const newHistory = history.filter(item => item.id !== id);
+                localStorage.setItem('storyHistory', JSON.stringify(newHistory));
+                displayHistory();
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('确定要清空所有历史记录吗？')) {
+                localStorage.removeItem('storyHistory');
+                displayHistory();
+            }
+        }
+
+        async function generateStory() {
+            const words = document.getElementById('wordInput').value.trim();
+            if (!words) {
+                alert('请先输入一些单词！');
+                return;
+            }
+
+            const wordList = words.split(/\s+/);
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const storyDiv = document.getElementById('story');
+            const definitionsDiv = document.getElementById('definitions');
+
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+            
+            storyDiv.innerHTML = '';
+            definitionsDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('https://api.deepseek.com/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer sk-346454e8570d46259a3b4641ec7226cf'
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "你是一个创意故事讲述者。你的任务是创作一个有趣的中文故事，但要将用户提供的英语单词自然地融入到中文故事中。这些英语单词应该保持英文形式，而故事的其余部分使用中文。故事结束后，需要列出所有使用的英语单词及其中文释义。"
+                            },
+                            {
+                                role: "user",
+                                content: `请使用这些英语单创作一个故事：${words}
+                                
+要求：
+1. 故事主体用中文写作，但要自然地融入这些英语单词
+2. 英语单词在故事中保持英文形式
+3. 故事要有趣、生动
+4. 故事结束后，另起一行写"单词释义："
+5. 然后列出每个英语单词的中文意思
+
+示例格式：
+小明很喜欢在 garden 里种花，每天都会 water 这些美丽的植物...（故事继续）
+
+单词释义：
+garden: 花园
+water: 浇水
+...`
+                            }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 2000
+                    })
+                });
+
+                // 更新进度到50%（API调用完成）
+                progressBar.style.width = '50%';
+                progressText.textContent = '50%';
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API请求失败，状态码：${response.status}, 错误信息：${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    throw new Error('API返回格式无效');
+                }
+
+                const content = data.choices[0].message.content;
+                
+                // 分割故事和释义部分
+                const parts = content.split('\n\n单词释义：');
+                const story = parts[0];
+                const definitions = parts[1] || '';
+
+                // 处理故事部分：为故事中的单词添加发音功能
+                const storyWithSound = story.replace(/\b[a-zA-Z]+\b/g, word => 
+                    `<span class="word" onclick="playSound('${word}')" style="cursor: pointer; color: #4CAF50;">${word}</span>`
+                );
+
+                // 处理释义部分：添加发音按钮
+                const definitionsArray = definitions.split('\n').filter(line => line.trim());
+                const definitionsHtml = definitionsArray.map(def => {
+                    const [word, meaning] = def.split(':').map(s => s.trim());
+                    if (!word) return '';
+                    return `
+                        <div class="word-item">
+                            <button class="sound-button" onclick="playSound('${word}')" title="点击播放发音">
+                                🔊
+                            </button>
+                            <span><strong>${word}</strong>: ${meaning}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                storyDiv.innerHTML = storyWithSound.replace(/\n/g, '<br>');
+                definitionsDiv.innerHTML = definitionsHtml;
+
+                // 保存到历史记录
+                saveToHistory(words, storyWithSound, definitionsHtml);
+
+                // 更新进度到75%（数据处理中）
+                progressBar.style.width = '75%';
+                progressText.textContent = '75%';
+
+                // 完成，更新进度到100%
+                progressBar.style.width = '100%';
+                progressText.textContent = '100%';
+
+                // 短暂延迟后隐藏进度条
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1000);
+            } catch (err) {
+                progressContainer.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = `错误：${err.message}`;
+                console.error('错误：', err);
+            }
+        }
+
+        // 页面加载时显示历史记录
+        window.onload = function() {
+            displayHistory();
+        };
+
+        // 历史记录按钮事件
+        document.getElementById('history').addEventListener('click', () => {
+            const historyPanel = document.getElementById('historyPanel');
+            const historyBtn = document.getElementById('history');
+            const isVisible = historyPanel.style.display === 'block';
+            
+            if (!isVisible) {
+                // 显示历史记录
+                const records = queryHistory.load();
+                const historyContent = document.getElementById('historyContent');
+                
+                historyContent.innerHTML = records.map((record) => `
+                    <div class="history-item">
+                        <span class="delete-btn" data-timestamp="${record.timestamp}">×</span>
+                        <div><strong>查询时间:</strong> ${new Date(record.timestamp).toLocaleString()}</div>
+                        ${record.meanings.map(m => `<div>${m.word}: ${m.meaning}</div>`).join('')}
+                    </div>
+                `).join('');
+                
+                // 添加删除按钮事件监听
+                historyContent.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const timestamp = e.target.dataset.timestamp;
+                        queryHistory.delete(timestamp);
+                        // 重新渲染历史记录
+                        renderHistory();
+                    });
+                });
+                
+                historyPanel.style.display = 'block';
+                historyBtn.classList.add('active');
+            } else {
+                // 隐藏历史记录
+                historyPanel.style.display = 'none';
+                historyBtn.classList.remove('active');
+            }
+        });
+
+        // 添加一个辅助函数来渲染历史记录
+        function renderHistory() {
+            const records = queryHistory.load();
+            const historyContent = document.getElementById('historyContent');
+            
+            historyContent.innerHTML = records.map((record) => `
+                <div class="history-item">
+                    <span class="delete-btn" data-timestamp="${record.timestamp}">×</span>
+                    <div><strong>查询时间:</strong> ${new Date(record.timestamp).toLocaleString()}</div>
+                    ${record.meanings.map(m => `<div>${m.word}: ${m.meaning}</div>`).join('')}
+                </div>
+            `).join('');
+
+            // 重新添加删除按钮事件监听
+            historyContent.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const timestamp = e.target.dataset.timestamp;
+                    queryHistory.delete(timestamp);
+                    renderHistory();
+                });
+            });
+        }
+    </script>
+</body>
+</html> 
